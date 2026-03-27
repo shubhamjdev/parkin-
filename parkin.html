@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ANPR Supabase Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      color: #22c55e;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 25px;
+      margin: 40px auto;
+      width: 320px;
+      border-radius: 15px;
+    }
+
+    #plate {
+      font-size: 42px;
+      color: #38bdf8;
+      letter-spacing: 2px;
+    }
+
+    #time {
+      color: #facc15;
+      margin-top: 10px;
+    }
+
+    #status {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🚗 ANPR Live Dashboard</h1>
+
+<div class="card">
+  <h2>Detected Plate</h2>
+  <div id="plate">Waiting...</div>
+  <div id="time">--</div>
+  <div id="status">Connecting...</div>
+</div>
+
+<script>
+  // 🔴 REPLACE THESE FROM SUPABASE
+  const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+  const SUPABASE_KEY = "YOUR_PUBLIC_ANON_KEY";
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function fetchLatest() {
+    const { data, error } = await supabase
+      .from("anpr")
+      .select("*")
+      .order("id", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      document.getElementById("status").innerText = "Error ❌";
+      return;
+    }
+
+    if (data.length === 0) {
+      document.getElementById("plate").innerText = "No Data";
+      return;
+    }
+
+    const row = data[0];
+
+    document.getElementById("plate").innerText = row.plate || "Unknown";
+    document.getElementById("time").innerText = row.created_at || "--";
+
+    if (row.plate && row.plate !== "No Plate Detected") {
+      document.getElementById("status").innerText = "Vehicle Detected ✅";
+    } else {
+      document.getElementById("status").innerText = "No Vehicle ❌";
+    }
+  }
+
+  // Auto refresh every 2 sec
+  setInterval(fetchLatest, 2000);
+  fetchLatest();
+</script>
+
+</body>
+</html>
